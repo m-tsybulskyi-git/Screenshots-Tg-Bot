@@ -1,0 +1,7 @@
+/screenshots/*
+/gifs/*
+/.venv/*
+.env
+bot.session*
+bots_session.session*
+bot_session.session*

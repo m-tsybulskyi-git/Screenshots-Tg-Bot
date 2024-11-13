@@ -1,0 +1,6 @@
+telethon
+python-dotenv
+mss
+opencv-python
+audioop-lts
+moviepy
