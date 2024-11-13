@@ -19,8 +19,8 @@ ADMIN_USERNAME = '@dev44level'
 
 commandsTemplate = """
 
-`duration` 1 - sets video duration in seconds
-`timeline` 5 - sets timelaps duration in seconds
+`duration` 1 (min) - sets video duration in seconds or minutes
+`timeline` 5 (min) - sets timelaps duration in seconds or minutes
 `auto_capture` (on|off) - to capture timelaps each timeline
 
 `capture` - to capture timelaps
@@ -32,8 +32,8 @@ if not os.path.exists(TMP_DIR):
 
 config = {
     'admin_chat_id': None, 
-    'duration': 1,  # seconds
-    'timeline': 5,  # seconds
+    'duration': 10,
+    'timeline': 3600, 
     'frame_rate': 30, # frames per second
     'auto_capture': False,
 }
@@ -60,17 +60,25 @@ async def toggle_capture_handler(event: events.NewMessage.Event):
             response = "**Timelapse capture at each timeline is now OFF.**"
         await event.reply(response + commandsTemplate, parse_mode='md')
 
-@client.on(events.NewMessage(pattern=r'(?i)duration (\d+)'))
+@client.on(events.NewMessage(pattern=r'(?i)duration (\d+)(?: (minutes?))?'))
 async def duration_handler(event: events.NewMessage.Event):
     if event.chat_id == config['admin_chat_id']:
-        config['duration'] = int(event.pattern_match.group(1))
-        await event.reply(f"**Time-lapse duration set to {config['duration']} seconds.**" + commandsTemplate, parse_mode='md')
+        time_unit = event.pattern_match.group(2)
+        time_value = int(event.pattern_match.group(1)) 
+        if time_unit != None and 'minutes' in time_unit:
+            time_value = time_value * 60 # convert to seconds
+        config['duration'] = time_value
+        await event.reply(f"**Time-lapse duration set to {config['duration']} seconds. ({time_value /60} minutes)**" + commandsTemplate, parse_mode='md')
 
-@client.on(events.NewMessage(pattern=r'(?i)timeline (\d+)'))
+@client.on(events.NewMessage(pattern=r'(?i)timeline (\d+)(?: (minutes?))?'))
 async def timeline_handler(event: events.NewMessage.Event):
     if event.chat_id == config['admin_chat_id']:
-        config['timeline'] = int(event.pattern_match.group(1))
-        await event.reply(f"**Recorded timeline set to {config['timeline']} seconds.**" + commandsTemplate, parse_mode='md')
+        time_unit = event.pattern_match.group(2)
+        time_value = int(event.pattern_match.group(1)) 
+        if time_unit != None and 'minutes' in time_unit:
+            time_value = time_value * 60 # convert to seconds
+        config['timeline'] = time_value  
+        await event.reply(f"**Recorded timeline set to {time_value} seconds. ({time_value /60} minutes)**" + commandsTemplate, parse_mode='md')
 
 @client.on(events.NewMessage)
 async def capture_handler(event: events.NewMessage.Event):
@@ -81,7 +89,7 @@ async def capture_handler(event: events.NewMessage.Event):
         if config['auto_capture']:
             auto_capture_task = asyncio.create_task(capture_timelapse_periodically())
         else:
-            capture_timelapse()
+            await capture_timelapse()
         
 
 async def capture_timelapse_periodically():
@@ -92,7 +100,6 @@ async def capture_timelapse_periodically():
         print("Timelapse capture task was cancelled.")
 
 async def capture_timelapse(): 
-    print("Capture timelapse started...")
     screenshots = take_screenshots_in_memory(config['timeline'], config['duration'])
     video_path = create_timelapse_video_from_memory(screenshots)
     await client.send_file(file=video_path, entity=ADMIN_USERNAME, caption='**Here is your time-lapse video**', parse_mode='md')
@@ -160,7 +167,7 @@ async def main():
     if config['admin_chat_id'] == None: 
         exit
     print("Bot started...")
-    await client.send_message(message=commandsTemplate, entity=ADMIN_USERNAME, parse_mode='md')
+    await client.send_message(message='**Bot Commands:**' + commandsTemplate, entity=ADMIN_USERNAME, parse_mode='md')
     await client.run_until_disconnected()
 
 if __name__ == '__main__':
