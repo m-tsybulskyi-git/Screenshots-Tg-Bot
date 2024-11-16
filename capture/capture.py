@@ -21,7 +21,7 @@ async def take_screenshots_in_memory(timeline, duration):
   
     with mss() as screen:
         monitor = screen.monitors[1]
-        for i in progress_bar(range(1, total_frames), display=1):
+        for i in progress_bar(range(0, total_frames), display=1):
             
             if config['is_cancel_requested']:
                 config['is_cancel_requested'] = False
@@ -37,7 +37,7 @@ async def take_screenshots_in_memory(timeline, duration):
             while (datetime.now() - now).total_seconds() < interval:
                 await asyncio.sleep(0.001) 
 
-            i += 1
+            
 
     return screenshots
 
@@ -62,7 +62,6 @@ def create_timelapse_video_from_memory(screenshots):
     silent_audio.export(audio_path, format="mp3")
     audio_clip = AudioFileClip(audio_path)
     
-    # Set the audio of the video clip as the silent audio file
     final_clip = video_clip.set_audio(audio_clip)
     final_output_path = util.tmp_path('timelapse.mp4')
     final_clip.write_videofile(final_output_path, codec='libx264')
