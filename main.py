@@ -9,9 +9,15 @@ load_dotenv()
 API_ID = int(os.getenv('API_ID'))
 API_HASH = os.getenv('API_HASH')
 PHONE_NUMBER = os.getenv('PHONE_NUMBER')
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+AUTH_METHOD = "bot_token"
 
-async def init(client): 
-    await client.start(phone=PHONE_NUMBER)
+async def init(client: TelegramClient): 
+    if(AUTH_METHOD == "phone"):
+        await client.start(phone=PHONE_NUMBER)
+    else: 
+        await client.start(bot_token=BOT_TOKEN) 
+
     await config.init(client)
     files.init()
     await handlers.setup_handlers(client)

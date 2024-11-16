@@ -1,19 +1,18 @@
-from datetime import timedelta
 from telegram_bot.config import config
+from telethon import Button
 
 async def send_message_to_admin(message, client): 
-    await client.send_message(message=commandsTemplate(message), entity=config['admin_username'])
-
+    await client.send_message(message=message, entity=config['admin_username'], buttons=generalButtons())
+    
 async def send_file_to_admin(video_path, caption, client): 
-    await client.send_file(caption=commandsTemplate(caption), entity=config['admin_username'], file=video_path)
+    await client.send_file(caption=caption, entity=config['admin_username'], file=video_path, buttons=generalButtons())
 
-def commandsTemplate(message):
-    return f"""{message}
-
-`duration` X `seconds`/`minutes`/`hours` - sets video duration (set to {timedelta(seconds=config['duration'])})
-`timeline` X `seconds`/`minutes`/`hours` - sets timelaps duration (set to {timedelta(seconds=config['timeline'])})
-`auto_capture` (`on`/`off`) - to capture timelaps each timeline (set to {config['auto_capture']})
-
-`capture` - to capture timelaps
-`cancel` - to cancel timelaps
-"""
+def generalButtons():
+    lines = list()
+    if not config['is_cancel_requested']:
+        if config['ongoing_capture']: 
+            lines.append(Button.inline("Cancel", b"cancel"))
+        else:
+            lines.append(Button.inline("Start", b"capture"))
+    lines.append(Button.inline(f"Auto {"🔘" if config['auto_capture'] else "⚪️"}", b"auto_capture"))
+    return [lines]

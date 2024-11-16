@@ -1,4 +1,3 @@
-import time
 import numpy as np
 import cv2
 from datetime import datetime
@@ -7,6 +6,7 @@ from moviepy.editor import VideoFileClip, AudioFileClip
 from pydub import AudioSegment
 from fastprogress import progress_bar
 from utils import files as util
+from telegram_bot.utils import generalButtons
 import asyncio
 
 from telegram_bot.config import config 
@@ -36,8 +36,6 @@ async def take_screenshots_in_memory(timeline, duration):
                     
             while (datetime.now() - now).total_seconds() < interval:
                 await asyncio.sleep(0.001) 
-
-            
 
     return screenshots
 
@@ -74,6 +72,7 @@ async def capture_timelapse_periodically(event):
         await capture_timelapse(event)
 
 async def capture_timelapse(event): 
+    await event.reply('**Starting new time-lapse capture...**', buttons=generalButtons()) 
     screenshots = await take_screenshots_in_memory(config['timeline'], config['duration'])
     video_path = create_timelapse_video_from_memory(screenshots)
     await event.reply(file=video_path)
