@@ -99,7 +99,7 @@ async def setup_handlers(client):
         if event.chat_id == config['admin_chat_id']:
             path = await capture.take_screenshot()
             await event.reply(file=path, buttons=utils.screenButtons())
-            file_utils.remove_tmp()
+            await file_utils.remove_tmp()
 
     @client.on(events.CallbackQuery(pattern='(?i)^refresh$'))
     async def screen_refresh_handler(event: events.CallbackQuery.Event):
@@ -108,7 +108,7 @@ async def setup_handlers(client):
             try:
                 await event.edit(file=path, buttons=utils.screenButtons())
             finally:
-                file_utils.remove_tmp()
+                await file_utils.remove_tmp()
     
     @client.on(events.NewMessage(func=lambda e: e.media is not None))
     async def click_on_screen_handler(event):
@@ -118,4 +118,11 @@ async def setup_handlers(client):
             await asyncio.sleep(0.1)
             path = await capture.take_screenshot()
             await event.reply(file=path, buttons=utils.screenButtons())
-            file_utils.remove_tmp()
+            
+            await file_utils.remove_tmp()
+
+    @client.on(events.NewMessage(pattern='(?i)^/start$'))
+    async def config_handler(event):
+        if event.chat_id == config['admin_chat_id']:   
+            await event.reply("**Bot started...**", buttons=utils.generalButtons())
+      

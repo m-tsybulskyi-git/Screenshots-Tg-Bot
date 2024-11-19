@@ -88,4 +88,4 @@ async def capture_timelapse(event):
     screenshots = await take_screenshots_in_memory(config['timeline'], config['duration'])
     video_path = create_timelapse_video_from_memory(screenshots)
     await event.reply(file=video_path)
-    util.remove_tmp()
+    await util.remove_tmp()

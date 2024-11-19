@@ -2,12 +2,6 @@ from telegram_bot.config import config
 from telethon import Button
 from datetime import datetime
 
-async def send_message_to_admin(message, client): 
-    await client.send_message(message=message, entity=config['admin_username'], buttons=generalButtons())
-    
-async def send_file_to_admin(video_path, caption, client): 
-    await client.send_file(caption=caption, entity=config['admin_username'], file=video_path, buttons=generalButtons())
-
 def generalButtons():
     lines = list()
     if not config['is_cancel_requested']:

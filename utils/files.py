@@ -1,4 +1,5 @@
 import os
+import asyncio
 
 TMP_DIR = 'tmp/'
 
@@ -6,7 +7,8 @@ def init():
     if not os.path.exists(TMP_DIR):
         os.makedirs(TMP_DIR)
 
-def remove_tmp(): 
+async def remove_tmp(): 
+    await asyncio.sleep(5)
     files = os.listdir(TMP_DIR)
     for file in files:
         file_path = os.path.join(TMP_DIR, file)
