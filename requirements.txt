@@ -6,3 +6,4 @@ audioop-lts
 moviepy
 pydub
 fastprogress
+pyautogui

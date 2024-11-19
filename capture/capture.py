@@ -8,6 +8,7 @@ from fastprogress import progress_bar
 from utils import files as util
 from telegram_bot.utils import generalButtons
 import asyncio
+import datetime
 
 from telegram_bot.config import config 
 
@@ -21,7 +22,7 @@ async def take_screenshots_in_memory(timeline, duration):
   
     with mss() as screen:
         monitor = screen.monitors[1]
-        for i in progress_bar(range(0, total_frames), display=1):
+        for _ in progress_bar(range(0, total_frames), display=1):
             
             if config['is_cancel_requested']:
                 config['is_cancel_requested'] = False
@@ -38,6 +39,18 @@ async def take_screenshots_in_memory(timeline, duration):
                 await asyncio.sleep(0.001) 
 
     return screenshots
+
+async def take_screenshot():
+    with mss() as screen:
+        monitor = screen.monitors[1]
+        screenshot = screen.grab(monitor)
+        img = np.array(screenshot)
+        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+        file_name = datetime.datetime.now().strftime('screenshot_%d-%m-%Y__%H_%M.png')
+        path = util.tmp_path(file_name)
+        cv2.imwrite(path, img)
+        return path
 
 def create_timelapse_video_from_memory(screenshots):
     print("Vides creation started...")
@@ -78,3 +91,5 @@ async def capture_timelapse(event):
     await event.reply(file=video_path)
     util.remove_tmp()
         
+def current_time():
+    return datetime.datetime.now().strftime("%H:%M:%S")

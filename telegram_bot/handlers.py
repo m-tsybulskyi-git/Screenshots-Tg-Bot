@@ -1,8 +1,10 @@
 from datetime import timedelta
 from telethon import events
 from telegram_bot import utils
-from capture import capture
+from utils import files as file_utils
+from capture import capture, processing
 from telegram_bot.config import config
+import asyncio
 
 async def setup_handlers(client):
 
@@ -92,3 +94,26 @@ async def setup_handlers(client):
 """      
             await event.reply(config_message, buttons=utils.generalButtons())
       
+    @client.on(events.NewMessage(pattern='(?i)^/screen$'))
+    async def screenshot_handler(event):
+        if event.chat_id == config['admin_chat_id']:
+            path = await capture.take_screenshot()
+            await event.reply(file=path, buttons=utils.screenButtons())
+            file_utils.remove_tmp()
+
+    @client.on(events.CallbackQuery(pattern='(?i)^refresh$'))
+    async def screen_refresh_handler(event: events.CallbackQuery.Event):
+        if event.chat_id == config['admin_chat_id']:
+            path = await capture.take_screenshot()
+            await event.edit(file=path, buttons=utils.screenButtons(), text=f"Refreshed at: {capture.current_time()}")
+            file_utils.remove_tmp()
+    
+    @client.on(events.NewMessage(func=lambda e: e.media is not None))
+    async def click_on_screen_handler(event):
+        if event.chat_id == config['admin_chat_id'] and event.photo:
+            saved_file_path = await event.download_media(file=file_utils.tmp_path("user_photo.png"))
+            processing.click_on_color_spot(saved_file_path)
+            await asyncio.sleep(0.1)
+            path = await capture.take_screenshot()
+            await event.reply(file=path, buttons=utils.screenButtons())
+            file_utils.remove_tmp()

@@ -16,3 +16,8 @@ def generalButtons():
             lines.append(Button.inline("Start", b"capture"))
     lines.append(Button.inline(f"Auto {"🔘" if config['auto_capture'] else "⚪️"}", b"auto_capture"))
     return [lines]
+
+def screenButtons():
+    lines = list()
+    lines.append(Button.inline("Refresh", b"refresh"))
+    return [lines]
