@@ -1,5 +1,6 @@
 from telegram_bot.config import config
 from telethon import Button
+from datetime import datetime
 
 async def send_message_to_admin(message, client): 
     await client.send_message(message=message, entity=config['admin_username'], buttons=generalButtons())
@@ -19,5 +20,6 @@ def generalButtons():
 
 def screenButtons():
     lines = list()
-    lines.append(Button.inline("Refresh", b"refresh"))
+    refreshed_at = datetime.now().strftime("%H:%M:%S")
+    lines.append(Button.inline(f"Refresh ({refreshed_at})", b"refresh"))
     return [lines]

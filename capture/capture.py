@@ -8,7 +8,6 @@ from fastprogress import progress_bar
 from utils import files as util
 from telegram_bot.utils import generalButtons
 import asyncio
-import datetime
 
 from telegram_bot.config import config 
 
@@ -47,7 +46,7 @@ async def take_screenshot():
         img = np.array(screenshot)
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
-        file_name = datetime.datetime.now().strftime('screenshot_%d-%m-%Y__%H_%M.png')
+        file_name = datetime.now().strftime('screenshot_%d-%m-%Y__%H_%M.png')
         path = util.tmp_path(file_name)
         cv2.imwrite(path, img)
         return path
@@ -90,6 +89,3 @@ async def capture_timelapse(event):
     video_path = create_timelapse_video_from_memory(screenshots)
     await event.reply(file=video_path)
     util.remove_tmp()
-        
-def current_time():
-    return datetime.datetime.now().strftime("%H:%M:%S")

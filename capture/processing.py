@@ -60,10 +60,8 @@ def find_colors_in_photo(image_path):
         try:
             centroid_coordinates = find_largest_spot_by_color(image, color) 
             if centroid_coordinates is not None:
-                print(f"Contur found for specified color: {color} - {centroid_coordinates}")
                 (coordinates_width, coordinates_height) = centroid_coordinates
                 centroid_coordinates = (width_scale * coordinates_width, height_scale * coordinates_height)
-                print(f"Fixed coordinates: {centroid_coordinates}")
                 break
         except NoContoursDetectedError:
             print(f"No conturs found for specified color: {color}")

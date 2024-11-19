@@ -105,8 +105,10 @@ async def setup_handlers(client):
     async def screen_refresh_handler(event: events.CallbackQuery.Event):
         if event.chat_id == config['admin_chat_id']:
             path = await capture.take_screenshot()
-            await event.edit(file=path, buttons=utils.screenButtons(), text=f"Refreshed at: {capture.current_time()}")
-            file_utils.remove_tmp()
+            try:
+                await event.edit(file=path, buttons=utils.screenButtons())
+            finally:
+                file_utils.remove_tmp()
     
     @client.on(events.NewMessage(func=lambda e: e.media is not None))
     async def click_on_screen_handler(event):
