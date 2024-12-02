@@ -1,16 +1,28 @@
-config = {
-    'admin_chat_id': None, 
-    'duration': 60,
-    'timeline': 60 * 60 * 6, #hours
-    'frame_rate': 30, # frames per second
-    'auto_capture': True,
-    'is_cancel_requested': False,
-    'ongoing_capture': False
-}
+class Scenario():
+    x: int = -1
+    y: int = -1
+    delay: int = 60 * 60 
+    duration: int = None
+    ongoing_scenario: bool = False
+
+class Capture():
+    duration: int = 60
+    timeline: int = 60 * 60 * 3
+    frame_rate: int = 30
+    auto_capture: bool = True
+    is_cancel_requested: bool = False
+    ongoing_capture: bool = False
+
+class General():
+    admin_chat_id: str = None
+
+capture_config: Capture = Capture()
+scenario_config: Scenario = Scenario()
+general_config: General = General()
 
 async def init(client, admin_username):
-    config['admin_chat_id'] = await get_admin_chat_id(admin_username, client)
-    if config['admin_chat_id'] == None: 
+    general_config.admin_chat_id = await get_admin_chat_id(admin_username, client)
+    if general_config.admin_chat_id == None: 
         exit
 
 async def get_admin_chat_id(username, client):

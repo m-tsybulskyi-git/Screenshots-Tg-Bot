@@ -9,22 +9,22 @@ from utils import files as util
 from telegram_bot.utils import generalButtons
 import asyncio
 
-from telegram_bot.config import config 
+from telegram_bot.config import capture_config
 
 async def take_screenshots_in_memory(timeline, duration):
 
     print("Screenshots creation started...")
     screenshots = []
 
-    total_frames = duration * config['frame_rate']
+    total_frames = duration * capture_config.frame_rate
     interval = timeline / total_frames
   
     with mss() as screen:
         monitor = screen.monitors[1]
         for _ in progress_bar(range(0, total_frames), display=1):
             
-            if config['is_cancel_requested']:
-                config['is_cancel_requested'] = False
+            if capture_config.is_cancel_requested:
+                capture_config.is_cancel_requested = False
                 break
 
             now = datetime.now()
@@ -57,7 +57,7 @@ def create_timelapse_video_from_memory(screenshots):
     if screenshots[0] is None:
         raise Exception
     height, width, _ = screenshots[0].shape
-    out = cv2.VideoWriter(timelapse_tmp_path, cv2.VideoWriter_fourcc(*'mp4v'), config['frame_rate'], (width, height))
+    out = cv2.VideoWriter(timelapse_tmp_path, cv2.VideoWriter_fourcc(*'mp4v'), capture_config.frame_rate, (width, height))
 
     for frame in progress_bar(screenshots, display=1):
         out.write(frame)
@@ -66,7 +66,7 @@ def create_timelapse_video_from_memory(screenshots):
 
     video_clip = VideoFileClip(timelapse_tmp_path)
 
-    duration_in_ms = len(screenshots) / config['frame_rate'] * 1000
+    duration_in_ms = len(screenshots) / capture_config.frame_rate * 1000
     audio_path = util.tmp_path('silent_audio.mp3')
     silent_audio = AudioSegment.silent(duration=duration_in_ms, frame_rate=44100)
     silent_audio.export(audio_path, format="mp3")
@@ -80,12 +80,12 @@ def create_timelapse_video_from_memory(screenshots):
     return final_output_path
 
 async def capture_timelapse_periodically(event): 
-    while config['auto_capture']: 
+    while capture_config.auto_capture: 
         await capture_timelapse(event)
 
 async def capture_timelapse(event): 
     await event.reply('**Starting new time-lapse capture...**', buttons=generalButtons()) 
-    screenshots = await take_screenshots_in_memory(config['timeline'], config['duration'])
+    screenshots = await take_screenshots_in_memory(capture_config.timeline, capture_config.duration)
     video_path = create_timelapse_video_from_memory(screenshots)
     await event.reply(file=video_path)
     util.remove_tmp()

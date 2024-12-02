@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import pyautogui
+from telegram_bot.config import scenario_config
+import asyncio
 
 class ImageReadError(Exception):
     """Exception raised when the image could not be read."""
@@ -34,9 +36,16 @@ def find_largest_spot_by_color(image, rgb_color):
 
     return (centroid_x, centroid_y)
 
+def click_saved():
+    pyautogui.click(scenario_config.x, scenario_config.y)
+
 def click_on_color_spot(image_path):
-    (x_cord, y_cord) = find_colors_in_photo(image_path)
-    pyautogui.click(x_cord, y_cord)
+    (x_cord, y_cord, double_click) = find_colors_in_photo(image_path)
+    scenario_config.x = x_cord
+    scenario_config.y = y_cord
+    if(double_click): 
+        click_saved()
+    click_saved()
 
 def find_colors_in_photo(image_path):
     image = cv2.imread(image_path)
@@ -55,20 +64,22 @@ def find_colors_in_photo(image_path):
         np.array([44, 127, 255]), # Blue
         np.array([253, 128, 31]), # Orange    
     ]
+    double_click = False
     centroid_coordinates = None
     for color in colors:
         try:
             centroid_coordinates = find_largest_spot_by_color(image, color) 
             if centroid_coordinates is not None:
                 (coordinates_width, coordinates_height) = centroid_coordinates
-                centroid_coordinates = (width_scale * coordinates_width, height_scale * coordinates_height)
+                (x_cord, y_cord) = (width_scale * coordinates_width, height_scale * coordinates_height)
                 break
         except NoContoursDetectedError:
             print(f"No conturs found for specified color: {color}")
+            double_click = True
         except ContourCalculationError:
             print(f"Contour calculation error for specified color: {color}")
 
-    return centroid_coordinates
+    return x_cord, y_cord, double_click
 
 def calculate_scale(original_size, target_size):
     width_scale = target_size[0] / original_size[0]

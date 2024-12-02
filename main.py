@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from telethon import TelegramClient
-from telegram_bot import utils, config, handlers
+from telegram_bot import config, handlers
 from utils import files
 
 load_dotenv()
@@ -27,7 +27,20 @@ async def main():
     client = TelegramClient('bot_session', API_ID, API_HASH)
     await init(client)
     print("Bot started...")
-    await client.run_until_disconnected()
+    while True:
+        try:
+            print("Trying to connect...")
+            await client.connect()
+            if not client.is_connected():
+                print("Failed to connect. Retrying in 5 seconds...")
+                await asyncio.sleep(5)
+            else:
+                print("Connected!")
+                await client.run_until_disconnected()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            print("Reconnecting in 5 seconds...")
+            await asyncio.sleep(5)
 
 if __name__ == '__main__':
     import asyncio
