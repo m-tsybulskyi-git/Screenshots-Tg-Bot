@@ -37,11 +37,17 @@ async def main():
             else:
                 print("Connected!")
                 await client.run_until_disconnected()
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        except KeyboardInterrupt:
+            print("Application was exited...")
+            exit
+        except Exception:
             print("Reconnecting in 5 seconds...")
             await asyncio.sleep(5)
 
 if __name__ == '__main__':
     import asyncio
-    asyncio.run(main())
+    try: 
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Application was exited...")
+        exit
