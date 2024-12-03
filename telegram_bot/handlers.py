@@ -5,12 +5,13 @@ from utils import files as file_utils
 from actions import capture, processing
 from telegram_bot.config import general_config, capture_config, scenario_config
 import asyncio
-from datetime import datetime
+from utils.logging import timeit
 
 async def setup_handlers(client):
 
     @client.on(events.CallbackQuery(pattern='(?i)^auto_capture$'))
     async def toggle_capture_handler(event):
+        print("Toggle autocapture (callback)")
         if event.chat_id == general_config.admin_chat_id:
             capture_config.auto_capture = not capture_config.auto_capture
             response = f"**Timelapse capture at each timeline is now {"ON" if capture_config.auto_capture else "OFF"}.**"
@@ -18,6 +19,7 @@ async def setup_handlers(client):
 
     @client.on(events.NewMessage(pattern=r'(?i)auto_capture (on|off)'))
     async def toggle_capture_handler(event: events.NewMessage.Event):
+        print("Toggle autocapture (message)")
         if event.chat_id == general_config.admin_chat_id:
             setting = event.pattern_match.group(1).lower()
             if setting == 'on':
@@ -30,6 +32,7 @@ async def setup_handlers(client):
 
     @client.on(events.NewMessage(pattern=r'(?i)duration (\d+)(?: (seconds?|minutes?|hours?))?'))
     async def duration_handler(event: events.NewMessage.Event):
+        print("Change timelaps duration (message)")
         if event.chat_id == general_config.admin_chat_id:
             time_unit = event.pattern_match.group(2)
             time_value = int(event.pattern_match.group(1)) 
@@ -44,6 +47,7 @@ async def setup_handlers(client):
 
     @client.on(events.NewMessage(pattern=r'(?i)timeline (\d+)(?: (seconds?|minutes?|hours?))?'))
     async def timeline_handler(event: events.NewMessage.Event):
+        print("Change timelaps timeline (message)")
         if event.chat_id == general_config.admin_chat_id:
             time_unit = event.pattern_match.group(2)
             time_value = int(event.pattern_match.group(1)) 
@@ -58,6 +62,7 @@ async def setup_handlers(client):
 
     @client.on(events.NewMessage(pattern=r'(?i)delay (\d+)(?: (seconds?|minutes?|hours?))?'))
     async def scenario_delay_handler(event: events.NewMessage.Event):
+        print("Change scenario delay (message)")
         if event.chat_id == general_config.admin_chat_id:
             time_unit = event.pattern_match.group(2)
             time_value = int(event.pattern_match.group(1)) 
@@ -72,6 +77,7 @@ async def setup_handlers(client):
 
     @client.on(events.NewMessage(pattern=r'(?i)autoclick (on|off)'))
     async def toggle_autoclick_handler(event: events.NewMessage.Event):
+        print("Toggle autoclick (message)")
         if event.chat_id == general_config.admin_chat_id:
             setting = event.pattern_match.group(1).lower()
             if setting == 'on':
@@ -85,15 +91,18 @@ async def setup_handlers(client):
 
     @client.on(events.CallbackQuery(pattern='(?i)^auto_click$'))
     async def toggle_autoclick_handler(event):
+        print("Toggle autoclick (callback)")
         if event.chat_id == general_config.admin_chat_id:
             scenario_config.ongoing_scenario = not scenario_config.ongoing_scenario
             if scenario_config.ongoing_scenario:
                 await run_scenario(event)
             else: 
                 await update_screen(event)
+            file_utils.remove_tmp()
 
     @client.on(events.NewMessage(pattern='(?i)^/config$'))
     async def config_handler(event):
+        print("Config (command)")
         if event.chat_id == general_config.admin_chat_id:
             config_message = f""" 
 **Configuration**
@@ -120,16 +129,20 @@ async def setup_handlers(client):
             if not capture_config.ongoing_capture:
                 capture_config.ongoing_capture = True
                 if capture_config.auto_capture:
+                    print("Timelaps started (periodicly)")
                     await capture.capture_timelapse_periodically(event)
                 else:
+                    print("Timelaps started")
                     await capture.capture_timelapse(event)
                 capture_config.ongoing_capture = False
             else:
+                print("Timelaps can not be started")
                 await event.reply('**There is ongoing time-lapse capture (`cancel` previos operation first)**', buttons=utils.generalButtons())     
 
     @client.on(events.CallbackQuery(pattern='(?i)^cancel$'))
     @client.on(events.NewMessage(pattern='(?i)^cancel$'))
     async def cancel_handler(event):
+        print("Cancel timelaps")
         if event.chat_id == general_config.admin_chat_id:
             if capture_config.ongoing_capture:
                 capture_config.is_cancel_requested = True 
@@ -139,6 +152,7 @@ async def setup_handlers(client):
 
     @client.on(events.NewMessage(pattern='(?i)^/screen$'))
     async def screenshot_handler(event):
+        print("Take screenshot (command)")
         if event.chat_id == general_config.admin_chat_id:
             path = await capture.take_screenshot()
             await event.reply(file=path, buttons=utils.screenButtons())
@@ -146,11 +160,13 @@ async def setup_handlers(client):
 
     @client.on(events.CallbackQuery(pattern='(?i)^refresh$'))
     async def screen_refresh_handler(event: events.CallbackQuery.Event):
+        print("Refresh screenshot (callback)")
         if event.chat_id == general_config.admin_chat_id:
             await update_screen(event)
     
     @client.on(events.NewMessage(func=lambda e: e.media is not None))
     async def click_on_screen_handler(event):
+        print("Image recived from user")
         if event.chat_id == general_config.admin_chat_id and event.photo:
             saved_file_path = await event.download_media(file=file_utils.tmp_path("user_photo.png"))
             processing.click_on_color_spot(saved_file_path)
@@ -160,6 +176,7 @@ async def setup_handlers(client):
 
     @client.on(events.NewMessage(pattern='(?i)^/start$'))
     async def config_handler(event):
+        print("Bot was started (command)")
         if event.chat_id == general_config.admin_chat_id:   
             await event.reply("**Bot started...**", buttons=utils.generalButtons())
       
@@ -167,23 +184,25 @@ async def run_scenario(event: events.NewMessage.Event):
     if scenario_config.x < 0 or scenario_config.y < 0:
             print("Cords not set")
             scenario_config.ongoing_scenario = False
+            await event.reply("**Send image with cords first**")
     while scenario_config.ongoing_scenario:
-        now = datetime.now() 
-        processing.click_saved()
-        await update_screen(event)
-        while (datetime.now() - now).total_seconds() < scenario_config.delay:
-            await asyncio.sleep(1) 
+        await auto_click(event)
+
+@timeit
+async def auto_click(event):
+    print("Click on screen")
+    processing.click_saved()
+    print("Take screenshot")
+    await update_screen(event)
+    print(f"Waiting for {scenario_config.delay} seconds")
+    await asyncio.sleep(scenario_config.delay) 
 
 async def screen(event): 
     await asyncio.sleep(0.1)
     path = await capture.take_screenshot()
     await event.reply(file=path, buttons=utils.screenButtons())
-    file_utils.remove_tmp()
 
 async def update_screen(event): 
     await asyncio.sleep(0.1)
     path = await capture.take_screenshot()
-    try:
-        await event.edit(file=path, buttons=utils.screenButtons())
-    finally:
-        file_utils.remove_tmp()
+    await event.edit(file=path, buttons=utils.screenButtons())

@@ -20,10 +20,13 @@ capture_config: Capture = Capture()
 scenario_config: Scenario = Scenario()
 general_config: General = General()
 
-async def init(client, admin_username):
-    general_config.admin_chat_id = await get_admin_chat_id(admin_username, client)
-    if general_config.admin_chat_id == None: 
+async def init(client, admin_username, admin_id):
+    admin_id_actual = admin_id
+    if not admin_id_actual: 
+        admin_id_actual  = await get_admin_chat_id(admin_username, client)
+    if not admin_id_actual: 
         exit
+    general_config.admin_chat_id = admin_id_actual
 
 async def get_admin_chat_id(username, client):
     try:
